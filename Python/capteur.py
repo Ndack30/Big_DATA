@@ -1,11 +1,14 @@
 
-from kafka import *
+from kafka import KafkaProducer
 import datetime as dt
 import json
 import random
 import time
 import uuid
 
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StringType, DoubleType, TimestampType
+from pyspark.sql.functions import col, from_json
 
 
 def generate_transaction():
@@ -39,6 +42,22 @@ def generate_transaction():
     }
 
     return transaction_data
+
+# Configuration du producteur Kafka
+producer = KafkaProducer(
+    bootstrap_servers='localhost:9092',  # Adresse de votre serveur Kafka
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')  # Sérialiser les données au format JSON
+)
+
+# Nom du topic Kafka
+topic = 'transaction'  # Nom corrigé du topic
+
+# Envoi continu des transactions au topic
+while True:
+    transaction = generate_transaction()  # Générer une transaction
+    producer.send(topic, transaction)  # Envoyer la transaction à Kafka
+    print(f"Transaction envoyée : {transaction}")  # Journalisation
+    time.sleep(1)  # Pause de 1 seconde entre les envois
 
 
 #Envoyer la data sur votre conducktor
